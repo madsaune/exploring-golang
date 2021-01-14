@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
-	"strconv"
+
+	"github.com/akamensky/argparse"
 )
 
 type dosage struct {
@@ -21,6 +21,14 @@ func showHelp() {
 }
 
 func main() {
+
+	parser := argparse.NewParser("", "Shows you the dosage for making good coffee!")
+	cups := parser.Float("c", "cups", &argparse.Options{Required: true, Help: "Number of cups. From 1-10, incremented by 0.5"})
+	err := parser.Parse(os.Args)
+	if err != nil {
+		fmt.Print(parser.Usage(err))
+		os.Exit(1)
+	}
 
 	var coffeetable = map[float64]dosage{
 		1:   dosage{0.15, 1, 1, 2.5},
@@ -44,22 +52,15 @@ func main() {
 		10:  dosage{1.25, 7.5, 7.5, 22.5},
 	}
 
-	if len(os.Args) < 2 {
-		showHelp()
+	if *cups < 1 || *cups > 10 {
+		fmt.Print(parser.Usage("Cups must be between 1-10 and incremented by 0.5"))
+		os.Exit(1)
 	}
 
-	cups, err := strconv.ParseFloat(os.Args[1], 64)
-	if err != nil {
-		log.Fatalf("Could not parse argument of %s to float", os.Args[1])
-	}
-
-	if cups < 1 || cups > 10 {
-		showHelp()
-	}
-
-	this, exists := coffeetable[cups]
+	this, exists := coffeetable[*cups]
 	if !exists {
-		showHelp()
+		fmt.Print(parser.Usage("Cups must be between 1-10 and incremented by 0.5"))
+		os.Exit(1)
 	}
 
 	fmt.Printf("You need %.2f litres of water, and %.1f tableSpoons of coffee.", this.water, this.tableSpoon)
